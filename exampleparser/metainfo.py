@@ -16,4 +16,17 @@
 # limitations under the License.
 #
 
-# This is empty now. Put your format specific metainfo definitions here.
+from nomad.metainfo import MSection, Section, Quantity
+
+from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
+
+
+# We extend the existing common definition of a section "single configuration calculation"
+class ExampleSCC(SCC):
+    # We alter the default base class behavior to add all definitions to the existing
+    # base class instead of inheriting from the base class
+    m_def = Section(extends_base_section=True)
+
+    # We define an additional example quantity. Use the prefix x_<parsername>_ to denote
+    # non common quantities.
+    x_example_magic_value = Quantity(type=int, description='The magic value from a magic source.')

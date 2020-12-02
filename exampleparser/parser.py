@@ -35,13 +35,69 @@ This is a hello world style example for an example parser/converter.
 '''
 
 
+def str_to_sites(string):
+    sym, pos = string.split('(')
+    pos = np.array(pos.split(')')[0].split(',')[:3], dtype=float)
+    return sym, pos
+
+
+calculation_parser = UnstructuredTextFileParser(quantities=[
+    Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites),
+    Quantity(
+        System.lattice_vectors,
+        r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
+        repeats=False),
+    Quantity('energy', r'energy: (\d\.\d+)'),
+    Quantity('magic_source', r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)', repeats=False)])
+
+mainfile_parser = UnstructuredTextFileParser(quantities=[
+    Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
+    Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
+    Quantity(
+        'calculation', r'\s*system \d+([\s\S]+?energy: [\d\.]+)([\s\S]+\*\*\*)*',
+        sub_parser=calculation_parser,
+        repeats=True)
+])
+
+
 class ExampleParser(FairdiParser):
     def __init__(self):
-        super().__init__(name='parsers/example', code_name='EXAMPLE')
+        super().__init__(
+            name='parsers/example', code_name='EXAMPLE', code_homepage='https://www.example.eu/',
+            mainfile_mime_re=r'(application/.*)|(text/.*)',
+            mainfile_contents_re=(r'^\s*#\s*This is example output'),
+            supported_compressions=['gz', 'bz2', 'xz']
+        )
 
     def run(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
         logger.info('Hello World')
 
+        # Use the previously defined parsers on the given mainfile
+        mainfile_parser.mainfile = mainfile
+        mainfile_parser.parse()
+
+        # Output all parsed data into the given archive.
         run = archive.m_create(Run)
-        run.program_name = 'EXAMPLE'
+        run.program_name = 'super_code'
+        run.program_version = str(mainfile_parser.get('program_version'))
+        date = datetime.datetime.strptime(
+            mainfile_parser.get('date'),
+            '%Y/%m/%d') - datetime.datetime(1970, 1, 1)
+        run.program_compilation_datetime = date.total_seconds()
+
+        for calculation in mainfile_parser.get('calculation'):
+            system = run.m_create(System)
+
+            system.lattice_vectors = calculation.get('lattice_vectors')
+            sites = calculation.get('sites')
+            system.atom_labels = [site[0] for site in sites]
+            system.atom_positions = [site[1] for site in sites]
+
+            scc = run.m_create(SCC)
+            scc.single_configuration_calculation_to_system_ref = system
+            scc.energy_total = calculation.get('energy') * units.eV
+            scc.single_configuration_calculation_to_system_ref = system
+            magic_source = calculation.get('magic_source')
+            if magic_source is not None:
+                scc.x_example_magic_value = magic_source
