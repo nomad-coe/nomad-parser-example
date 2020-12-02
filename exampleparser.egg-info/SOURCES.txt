@@ -1,0 +1,12 @@
+README.md
+setup.py
+exampleparser/__init__.py
+exampleparser/__main__.py
+exampleparser/metainfo.py
+exampleparser/parser.py
+exampleparser.egg-info/PKG-INFO
+exampleparser.egg-info/SOURCES.txt
+exampleparser.egg-info/dependency_links.txt
+exampleparser.egg-info/requires.txt
+exampleparser.egg-info/top_level.txt
+test/test_parser.py

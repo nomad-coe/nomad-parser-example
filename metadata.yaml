@@ -1,0 +1,10 @@
+codeLabel: EXAMPLE
+codeLabelStyle: All in capitals
+codeUrl: https://www.example.eu/
+parserDirName: dependencies/parsers/example/
+parserGitUrl: https://gitlab.mpcdf.mpg.de/nomad-lab/parser-example
+parserSpecific: ''
+tableOfFiles: |
+  |Input Filename| Description|
+  |--- | --- |
+  |`example.out` | **Mainfile** in EXAMPLE specific plain-text |
