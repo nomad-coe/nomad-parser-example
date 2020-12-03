@@ -1,0 +1,32 @@
+name: python
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install https://nomad-lab.eu/dev/nomad/v0-9-8/dist/nomad-lab.tar.gz
+        pip install mypy==0.730 pylint==2.3.1 pylint_plugin_utils==0.5 pycodestyle pytest==3.10.0 pytest-timeout pytest-cov==2.7.1
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: pycodestyle
+      run: |
+        python -m pycodestyle --ignore=E501,E701,E731 *parser tests
+    - name: pylint
+      run: |
+        python -m pylint --load-plugins=nomad/metainfo/pylint_plugin *parser tests
+    - name: mypy
+      run: |
+        python -m mypy --ignore-missing-imports --follow-imports=silent --no-strict-optional *parser tests
+    - name: Test with pytest
+      run: |
+        pytest -sv tests

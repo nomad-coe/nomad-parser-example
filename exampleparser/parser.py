@@ -28,7 +28,7 @@ from nomad.datamodel.metainfo.public import section_single_configuration_calcula
 
 from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
 
-from . import metainfo
+from . import metainfo  # pylint: disable=unused-import
 
 '''
 This is a hello world style example for an example parser/converter.

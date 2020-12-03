@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-from nomad.metainfo import MSection, Section, Quantity
+from nomad.metainfo import Section, Quantity
 
 from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
 
