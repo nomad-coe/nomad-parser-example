@@ -16,24 +16,22 @@
 # limitations under the License.
 #
 
+import pytest
+import logging
+
 from nomad.datamodel import EntryArchive
-from nomad.parsing import FairdiParser
-from nomad.datamodel.metainfo.public import section_run as Run
 
-from . import metainfo  # pylint: disable=unused-import
-
-'''
-This is a hello world style example for an example parser/converter.
-'''
+from exampleparser import ExampleParser
 
 
-class ExampleParser(FairdiParser):
-    def __init__(self):
-        super().__init__(name='parsers/example', code_name='EXAMPLE')
+@pytest.fixture
+def parser():
+    return ExampleParser()
 
-    def run(self, mainfile: str, archive: EntryArchive, logger):
-        # Log a hello world, just to get us started. TODO remove from an actual parser.
-        logger.info('Hello World')
 
-        run = archive.m_create(Run)
-        run.program_name = 'EXAMPLE'
+def test_example(parser):
+    archive = EntryArchive()
+    parser.run('tests/data/example.out', archive, logging)
+
+    run = archive.section_run[0]
+    assert run.program_name == 'EXAMPLE'
