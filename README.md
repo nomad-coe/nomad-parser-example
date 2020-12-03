@@ -1,3 +1,8 @@
+![python](https://github.com/nomad-coe/nomad-parser-example/workflows/python/badge.svg)
+
+**Note:** This is not a real parser, but an example template on how to write one. You can fork
+this repository to create actual parsers.
+
 This is a NOMAD parser for [EXAMPLE](https://www.example.eu/). It will read EXAMPLE input and
 output files and provide all information in NOMAD's unified Metainfo based Archive format.
 
