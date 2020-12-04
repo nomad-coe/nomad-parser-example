@@ -26,7 +26,7 @@ def main():
         description='NOMAD parser implementation for Example.',
         author='The NOMAD Authors',
         license='APACHE 2.0',
-        packages=find_packages(),
+        packages=find_packages(exclude=['tests']),
         install_requires=['nomad-lab'])
 
 
