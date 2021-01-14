@@ -27,6 +27,13 @@ cd parser-example
 python -m exampleparser tests/data/example.out
 ```
 
+There are also a basic test framework written in [pytest](https://docs.pytest.org/en/stable/).
+Install the remaining dev dependencies and run the tests with:
+```
+pip install -r requirements.txt
+pytest -sv tests
+```
+
 ## Next steps
 
 Our documentation provides several resources that might be interesting:
