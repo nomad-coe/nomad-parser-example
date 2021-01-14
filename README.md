@@ -1,7 +1,47 @@
-![python](https://github.com/nomad-coe/nomad-parser-example/workflows/python/badge.svg)
+This is not a real parser, but an example template on how to write one. You can fork this repository to create actual parsers.
 
-**Note:** This is not a real parser, but an example template on how to write one. You can fork
-this repository to create actual parsers.
+## Get started
+
+You should create a virtual environment. This is optional, but highly recommended as
+the required nomad-lab pypi package requires many dependencies with specific versions
+that might conflict with other libraries that you have installed. This was tested
+with Python 3.7.
+
+```
+pip install virtualenv
+virtualenv -p `which python3` .pyenv
+source .pyenv/bin/activate
+```
+
+Simply install our pypi package with pip:
+```
+pip install --upgrade pip
+pip install nomad-lab
+```
+
+Clone this project (or fork and then clone the fork). Go into the cloned directly and
+directly run the parser from there:
+```
+git clone https://github.com/nomad-coe/nomad-parser-example.git parser-example
+cd parser-example
+python -m exampleparser tests/data/example.out
+```
+
+## Next steps
+
+Our documentation provides several resources that might be interesting:
+- [How to write a parser](https://nomad-lab.eu/prod/rae/docs/parser.html). Provides
+  a more detailed tutorial on how to write a parser.
+- [Introduction to the NOMAD Metainfo](https://nomad-lab.eu/prod/rae/docs/metainfo.html).
+  This explains how NOMAD data schema and can be extended and used within your parser.
+
+To get you parser included in NOMAD or ask further questions, you can:
+- Use our forums at [matsci.org](https://matsci.org/c/nomad/32)
+- Open an issue on the [example-parser GitHub project](https://github.com/nomad-coe/nomad-parser-example/issues)
+- Write to [support@nomad-lab.eu](mailto:support@nomad-lab.eu)
+
+**Note!** The rest of this README.md is the usual text that applies to all NOMAD parsers.
+
 
 This is a NOMAD parser for [EXAMPLE](https://www.example.eu/). It will read EXAMPLE input and
 output files and provide all information in NOMAD's unified Metainfo based Archive format.
@@ -23,7 +63,7 @@ calculations (remember that you can provide more files if you want):
 
 |Input Filename| Description|
 |--- | --- |
-|`example.out` | **Mainfile** in plain-text in EXAMPLE format |
+|`example.out` | **Mainfile** in EXAMPLE specific plain-text |
 
 
 To create an upload with all calculations in a directory structure:
@@ -70,7 +110,15 @@ python_dict = section_run.m_to_dict()
 
 ## Developing the parser
 
-Also install NOMAD's pypi package:
+Create a virtual environment to install the parser in development mode:
+
+```
+pip install virtualenv
+virtualenv -p `which python3` .pyenv
+source .pyenv/bin/activate
+```
+
+Install NOMAD's pypi package:
 
 ```
 pip install nomad-lab
@@ -79,8 +127,10 @@ pip install nomad-lab
 Clone the parser project and install it in development mode:
 
 ```
-git clone https://gitlab.mpcdf.mpg.de/nomad-lab/parser-example parser-example
+git clone https://github.com/nomad-coe/nomad-parser-example.git parser-example
 pip install -e parser-example
 ```
 
 Running the parser now, will use the parser's Python code from the clone project.
+
+$parserSpecific$
