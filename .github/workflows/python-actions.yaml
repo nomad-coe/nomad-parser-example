@@ -15,8 +15,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install https://nomad-lab.eu/dev/nomad/v0-9-8/dist/nomad-lab.tar.gz
-        pip install mypy==0.730 pylint==2.3.1 pylint_plugin_utils==0.5 pycodestyle pytest==3.10.0 pytest-timeout pytest-cov==2.7.1
+        pip install nomad-lab
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: pycodestyle
       run: |
