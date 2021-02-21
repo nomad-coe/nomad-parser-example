@@ -16,8 +16,9 @@
 # limitations under the License.
 #
 
-import datetime
-import numpy as np
+# import datetime
+# import numpy as np
+import json
 
 from nomad.datamodel import EntryArchive
 from nomad.parsing import FairdiParser
@@ -26,78 +27,115 @@ from nomad.datamodel.metainfo.public import section_run as Run
 from nomad.datamodel.metainfo.public import section_system as System
 from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
 
-from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
-
 from . import metainfo  # pylint: disable=unused-import
-
+# from .metainfo import Measurement, Sample, Metadata, Instrument
+from .metainfo import *
 '''
 This is a hello world style example for an example parser/converter.
 '''
-
-
-def str_to_sites(string):
-    sym, pos = string.split('(')
-    pos = np.array(pos.split(')')[0].split(',')[:3], dtype=float)
-    return sym, pos
-
-
-calculation_parser = UnstructuredTextFileParser(quantities=[
-    Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites),
-    Quantity(
-        System.lattice_vectors,
-        r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
-        repeats=False),
-    Quantity('energy', r'energy: (\d\.\d+)'),
-    Quantity('magic_source', r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)', repeats=False)])
-
-mainfile_parser = UnstructuredTextFileParser(quantities=[
-    Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
-    Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
-    Quantity(
-        'calculation', r'\s*system \d+([\s\S]+?energy: [\d\.]+)([\s\S]+\*\*\*)*',
-        sub_parser=calculation_parser,
-        repeats=True)
-])
 
 
 class ExampleParser(FairdiParser):
     def __init__(self):
         super().__init__(
             name='parsers/example', code_name='EXAMPLE', code_homepage='https://www.example.eu/',
-            mainfile_mime_re=r'(application/.*)|(text/.*)',
-            mainfile_contents_re=(r'^\s*#\s*This is example output'),
-            supported_compressions=['gz', 'bz2', 'xz']
+            mainfile_mime_re=r'(application/json)'
         )
 
     def run(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
-        logger.info('Hello World')
+        logger.info('Testing the World')
 
-        # Use the previously defined parsers on the given mainfile
-        mainfile_parser.mainfile = mainfile
-        mainfile_parser.parse()
+        #Read the JSON file into a dictionary
+        with open(mainfile, 'rt') as f:
+            file_data = json.load(f)
 
-        # Output all parsed data into the given archive.
-        run = archive.m_create(Run)
-        run.program_name = 'super_code'
-        run.program_version = str(mainfile_parser.get('program_version'))
-        date = datetime.datetime.strptime(
-            mainfile_parser.get('date'),
-            '%Y/%m/%d') - datetime.datetime(1970, 1, 1)
-        run.program_compilation_datetime = date.total_seconds()
+        #Reading a measurement
+        measurement = archive.m_create(Measurement)
 
-        for calculation in mainfile_parser.get('calculation'):
-            system = run.m_create(System)
+        #Create the hierarchical structure
+        metadata = measurement.m_create(Metadata)
+        data = measurement.m_create(Data)
 
-            system.lattice_vectors = calculation.get('lattice_vectors')
-            sites = calculation.get('sites')
-            system.atom_labels = [site[0] for site in sites]
-            system.atom_positions = [site[1] for site in sites]
+        # Create the hierarchical structure inside metadata
+        sample = metadata.m_create(Sample)
+        experiment = metadata.m_create(Experiment)
+        instrument = metadata.m_create(Instrument)
+        data_header = metadata.m_create(DataHeader)
+        author_generated = metadata.m_create(AuthorGenerated)
 
-            scc = run.m_create(SCC)
-            scc.single_configuration_calculation_to_system_ref = system
-            scc.energy_total = calculation.get('energy') * units.eV
-            scc.single_configuration_calculation_to_system_ref = system
-            magic_source = calculation.get('magic_source')
-            if magic_source is not None:
-                scc.x_example_magic_value = magic_source
+        #Load entries into each above hierarchical structure
+        #Sample
+        sample.spectrum_region = file_data[0]['metadata']['spectrum_region']
+
+        #Experiment
+        experiment.method_type = file_data[0]['metadata']['method_type']
+
+        #Instrument
+        instrument.n_scans = file_data[0]['metadata']['n_scans']
+        instrument.dwell_time = file_data[0]['metadata']['dwell_time']
+        instrument.excitation_energy = file_data[0]['metadata']['excitation_energy']
+
+        if file_data[0]['metadata']['source_label']:
+            instrument.source_label = file_data[0]['metadata']['source_label']
+        
+        author_generated.author_name = file_data[0]['metadata']['author']
+        author_generated.group_name = file_data[0]['metadata']['group_name']
+        author_generated.sample_id = file_data[0]['metadata']['sample']
+        author_generated.experiment_id = file_data[0]['metadata']['experiment_id']
+        author_generated.timestamp = file_data[0]['metadata']['timestamp']
+
+        #Data Header
+        for dlabel in file_data[0]['metadata']['data_labels']: 
+            data_header.channel_id = str(dlabel['channel_id'])
+            data_header.label = dlabel['label']
+            data_header.unit = dlabel['unit']
+
+        #Reading columns
+        numerical_values = data.m_create(NumericalValues)
+        numerical_values.data = file_data[0]['data'][0]
+        
+
+
+        # for item in file_data:
+
+        #     measurement = archive.m_create(Measurement)
+        #     # measurement.timestamp = datetime.datetime.now()
+
+        #     metadata = measurement.m_create(Metadata)
+
+        #     sample = metadata.m_create(Sample)
+        #     sample.spectrum_region = item['metadata']['spectrum_region']
+
+        #     # experiment = metadata.m_create(Experiment)
+        #     # experiment.method_type = data[i]['metadata']['method_type']
+
+        #     # instrument = metadata.m_create(Instrument)
+        #     # instrument.n_scans = data[i]['metadata']['n_scans']
+        #     # instrument.dwell_time = data[i]['metadata']['dwell_time']
+        #     # instrument.excitation_energy = data[i]['metadata']['excitation_energy']
+            
+
+        #     # try:
+        #     #     instrument.source_label = data[i]['metadata']['source_label']
+        #     # except KeyError:
+        #     #     print("Couldn't find key")
+
+        #     # author_generated = metadata.m_create(AuthorGenerated)
+        #     # author_generated.author_name = data[i]['metadata']['author']
+        #     # author_generated.group_name = data[i]['metadata']['group_name']
+        #     # author_generated.sample_id = data[i]['metadata']['sample']
+        #     # author_generated.experiment_id = data[i]['metadata']['experiment_id']
+        #     # author_generated.timestamp = data[i]['metadata']['timestamp']
+
+        #     data_header = metadata.m_create(DataHeader)
+        #     for dlabel in item['metadata']['data_labels']: 
+        #         data_header.channel_id = str(dlabel['channel_id'])
+        #         data_header.label = dlabel['label']
+        #         data_header.unit = dlabel['unit']
+
+        #     # data = measurement.m_create(Data)
+
+        #     # numerical_values = data.m_create(NumericalValues)
+        #     # # numerical_values.data_values = data[0]['data'][0]
+        
