@@ -19,20 +19,25 @@
 # import datetime
 # import numpy as np
 import json
+import numpy as np
+from datetime import datetime
+import logging
+import pandas as pd
+import nomad.units
 
 from nomad.datamodel import EntryArchive
 from nomad.parsing import FairdiParser
-from nomad.units import ureg as units
 from nomad.datamodel.metainfo.public import section_run as Run
 from nomad.datamodel.metainfo.public import section_system as System
 from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
 
 from . import metainfo  # pylint: disable=unused-import
-# from .metainfo import Measurement, Sample, Metadata, Instrument
 from .metainfo import *
 '''
-This is a hello world style example for an example parser/converter.
+This is a test parser for XPS Parser
 '''
+
+logger = logging.getLogger(__name__)
 
 
 class ExampleParser(FairdiParser):
@@ -43,99 +48,59 @@ class ExampleParser(FairdiParser):
         )
 
     def run(self, mainfile: str, archive: EntryArchive, logger):
-        # Log a hello world, just to get us started. TODO remove from an actual parser.
-        logger.info('Testing the World')
+        # Log a hello world, just to get us started.
+        logger.info('Testing the XPS World')
 
-        #Read the JSON file into a dictionary
+        # Read the JSON file into a dictionary
         with open(mainfile, 'rt') as f:
             file_data = json.load(f)
 
-        #Reading a measurement
-        measurement = archive.m_create(Measurement)
+        for item in file_data:
+            # Create a measurement in the archive
+            measurement = archive.m_create(Measurement)
 
-        #Create the hierarchical structure
-        metadata = measurement.m_create(Metadata)
-        data = measurement.m_create(Data)
+            """
+            Create metadata schematic and import values
+            """
+            metadata = measurement.m_create(Metadata)
 
-        # Create the hierarchical structure inside metadata
-        sample = metadata.m_create(Sample)
-        experiment = metadata.m_create(Experiment)
-        instrument = metadata.m_create(Instrument)
-        data_header = metadata.m_create(DataHeader)
-        author_generated = metadata.m_create(AuthorGenerated)
+            # Load entries into each heading
 
-        #Load entries into each above hierarchical structure
-        #Sample
-        sample.spectrum_region = file_data[0]['metadata']['spectrum_region']
+            # Sample
+            sample = metadata.m_create(Sample)
 
-        #Experiment
-        experiment.method_type = file_data[0]['metadata']['method_type']
+            sample.spectrum_region = item['metadata']['spectrum_region']
+            sample.sample_id = item['metadata']['sample']
 
-        #Instrument
-        instrument.n_scans = file_data[0]['metadata']['n_scans']
-        instrument.dwell_time = file_data[0]['metadata']['dwell_time']
-        instrument.excitation_energy = file_data[0]['metadata']['excitation_energy']
+            # Experiment
+            experiment = metadata.m_create(Experiment)
+            experiment.method_name = item['metadata']['method_type']
+            experiment.experiment_id = item['metadata']['experiment_id']
+            experiment.experiment_publish_time = datetime.now()
+            # experiment.experiment_start_time = datetime.strptime(
+                # item['metadata']['timestamp'], '%d-%m-%Y %H:%M:%S')
 
-        if file_data[0]['metadata']['source_label']:
-            instrument.source_label = file_data[0]['metadata']['source_label']
-        
-        author_generated.author_name = file_data[0]['metadata']['author']
-        author_generated.group_name = file_data[0]['metadata']['group_name']
-        author_generated.sample_id = file_data[0]['metadata']['sample']
-        author_generated.experiment_id = file_data[0]['metadata']['experiment_id']
-        author_generated.timestamp = file_data[0]['metadata']['timestamp']
+            # Instrument
+            instrument = metadata.m_create(Instrument)
+            instrument.n_scans = item['metadata']['n_scans']
+            instrument.dwell_time = item['metadata']['dwell_time']
+            instrument.excitation_energy = item['metadata']['excitation_energy']
 
-        #Data Header
-        for dlabel in file_data[0]['metadata']['data_labels']: 
-            data_header.channel_id = str(dlabel['channel_id'])
-            data_header.label = dlabel['label']
-            data_header.unit = dlabel['unit']
+            if item['metadata']['source_label'] is not None:
+                instrument.source_label = item['metadata']['source_label']
 
-        #Reading columns
-        numerical_values = data.m_create(NumericalValues)
-        numerical_values.data = file_data[0]['data'][0]
-        
+            # Author Generated
+            author_generated = metadata.m_create(AuthorGenerated)
+            author_generated.author_name = item['metadata']['author']
+            author_generated.group_name = item['metadata']['group_name']
 
+            # Data Header
+            for dlabel in item['metadata']['data_labels']:
+                data_header = metadata.m_create(DataHeader)
+                data_header.channel_id = str(dlabel['channel_id'])
+                data_header.label = dlabel['label']
+                data_header.unit = dlabel['unit']
 
-        # for item in file_data:
+            data = measurement.m_create(Data)
 
-        #     measurement = archive.m_create(Measurement)
-        #     # measurement.timestamp = datetime.datetime.now()
-
-        #     metadata = measurement.m_create(Metadata)
-
-        #     sample = metadata.m_create(Sample)
-        #     sample.spectrum_region = item['metadata']['spectrum_region']
-
-        #     # experiment = metadata.m_create(Experiment)
-        #     # experiment.method_type = data[i]['metadata']['method_type']
-
-        #     # instrument = metadata.m_create(Instrument)
-        #     # instrument.n_scans = data[i]['metadata']['n_scans']
-        #     # instrument.dwell_time = data[i]['metadata']['dwell_time']
-        #     # instrument.excitation_energy = data[i]['metadata']['excitation_energy']
-            
-
-        #     # try:
-        #     #     instrument.source_label = data[i]['metadata']['source_label']
-        #     # except KeyError:
-        #     #     print("Couldn't find key")
-
-        #     # author_generated = metadata.m_create(AuthorGenerated)
-        #     # author_generated.author_name = data[i]['metadata']['author']
-        #     # author_generated.group_name = data[i]['metadata']['group_name']
-        #     # author_generated.sample_id = data[i]['metadata']['sample']
-        #     # author_generated.experiment_id = data[i]['metadata']['experiment_id']
-        #     # author_generated.timestamp = data[i]['metadata']['timestamp']
-
-        #     data_header = metadata.m_create(DataHeader)
-        #     for dlabel in item['metadata']['data_labels']: 
-        #         data_header.channel_id = str(dlabel['channel_id'])
-        #         data_header.label = dlabel['label']
-        #         data_header.unit = dlabel['unit']
-
-        #     # data = measurement.m_create(Data)
-
-        #     # numerical_values = data.m_create(NumericalValues)
-        #     # # numerical_values.data_values = data[0]['data'][0]
-        
+            spectrum = data.m_create(Spectrum)
