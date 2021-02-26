@@ -102,18 +102,18 @@ class ExampleParser(FairdiParser):
                 data_header.unit = dlabel['unit']
 
             data = measurement.m_create(Data)
-
+            ureg = nomad.units.ureg
             for i in range(len(item['data'])):
                 spectrum = data.m_create(Spectrum)
                 if item['metadata']['data_labels'][i]['channel_id'] == 0:
-                    spectrum.kinetic_energy = item['data'][i]
+                    spectrum.kinetic_energy = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
                 elif item['metadata']['data_labels'][i]['channel_id'] == 1:
-                    spectrum.count = item['data'][i]
+                    spectrum.count = np.array(item['data'][i])
                 elif item['metadata']['data_labels'][i]['channel_id'] == 2:
-                    spectrum.excitation_energy = item['data'][i]
+                    spectrum.excitation_energy = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
                 elif item['metadata']['data_labels'][i]['channel_id'] == 3:
-                    spectrum.ring_current = item['data'][i]
+                    spectrum.ring_current = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
                 elif item['metadata']['data_labels'][i]['channel_id'] == 4:
-                    spectrum.total_electron_yield = item['data'][i]
+                    spectrum.total_electron_yield = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
                 elif item['metadata']['data_labels'][i]['channel_id'] == 5:
-                    spectrum.mirror_current = item['data'][i]
+                    spectrum.mirror_current = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
