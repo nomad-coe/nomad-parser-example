@@ -16,88 +16,104 @@
 # limitations under the License.
 #
 
-import datetime
+# import datetime
+# import numpy as np
+import json
 import numpy as np
+from datetime import datetime
+import logging
+import pandas as pd
+import nomad.units
 
 from nomad.datamodel import EntryArchive
 from nomad.parsing import FairdiParser
-from nomad.units import ureg as units
 from nomad.datamodel.metainfo.public import section_run as Run
 from nomad.datamodel.metainfo.public import section_system as System
 from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
 
-from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
-
 from . import metainfo  # pylint: disable=unused-import
-
+from .metainfo import *
 '''
-This is a hello world style example for an example parser/converter.
+This is a test parser for XPS Parser
 '''
 
-
-def str_to_sites(string):
-    sym, pos = string.split('(')
-    pos = np.array(pos.split(')')[0].split(',')[:3], dtype=float)
-    return sym, pos
-
-
-calculation_parser = UnstructuredTextFileParser(quantities=[
-    Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites),
-    Quantity(
-        System.lattice_vectors,
-        r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
-        repeats=False),
-    Quantity('energy', r'energy: (\d\.\d+)'),
-    Quantity('magic_source', r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)', repeats=False)])
-
-mainfile_parser = UnstructuredTextFileParser(quantities=[
-    Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
-    Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
-    Quantity(
-        'calculation', r'\s*system \d+([\s\S]+?energy: [\d\.]+)([\s\S]+\*\*\*)*',
-        sub_parser=calculation_parser,
-        repeats=True)
-])
+logger = logging.getLogger(__name__)
 
 
 class ExampleParser(FairdiParser):
     def __init__(self):
         super().__init__(
             name='parsers/example', code_name='EXAMPLE', code_homepage='https://www.example.eu/',
-            mainfile_mime_re=r'(application/.*)|(text/.*)',
-            mainfile_contents_re=(r'^\s*#\s*This is example output'),
-            supported_compressions=['gz', 'bz2', 'xz']
+            mainfile_mime_re=r'(application/json)'
         )
 
     def run(self, mainfile: str, archive: EntryArchive, logger):
-        # Log a hello world, just to get us started. TODO remove from an actual parser.
-        logger.info('Hello World')
+        # Log a hello world, just to get us started.
+        logger.info('Testing the XPS World')
 
-        # Use the previously defined parsers on the given mainfile
-        mainfile_parser.mainfile = mainfile
-        mainfile_parser.parse()
+        # Read the JSON file into a dictionary
+        with open(mainfile, 'rt') as f:
+            file_data = json.load(f)
 
-        # Output all parsed data into the given archive.
-        run = archive.m_create(Run)
-        run.program_name = 'super_code'
-        run.program_version = str(mainfile_parser.get('program_version'))
-        date = datetime.datetime.strptime(
-            mainfile_parser.get('date'),
-            '%Y/%m/%d') - datetime.datetime(1970, 1, 1)
-        run.program_compilation_datetime = date.total_seconds()
+        for item in file_data:
+            # Create a measurement in the archive
+            measurement = archive.m_create(Measurement)
 
-        for calculation in mainfile_parser.get('calculation'):
-            system = run.m_create(System)
+            """
+            Create metadata schematic and import values
+            """
+            metadata = measurement.m_create(Metadata)
 
-            system.lattice_vectors = calculation.get('lattice_vectors')
-            sites = calculation.get('sites')
-            system.atom_labels = [site[0] for site in sites]
-            system.atom_positions = [site[1] for site in sites]
+            # Load entries into each heading
 
-            scc = run.m_create(SCC)
-            scc.single_configuration_calculation_to_system_ref = system
-            scc.energy_total = calculation.get('energy') * units.eV
-            scc.single_configuration_calculation_to_system_ref = system
-            magic_source = calculation.get('magic_source')
-            if magic_source is not None:
-                scc.x_example_magic_value = magic_source
+            # Sample
+            sample = metadata.m_create(Sample)
+
+            sample.spectrum_region = item['metadata']['spectrum_region']
+            sample.sample_id = item['metadata']['sample']
+
+            # Experiment
+            experiment = metadata.m_create(Experiment)
+            experiment.method_name = item['metadata']['method_type']
+            experiment.experiment_id = item['metadata']['experiment_id']
+            experiment.experiment_publish_time = datetime.now()
+            # experiment.experiment_start_time = datetime.strptime(
+            # item['metadata']['timestamp'], '%d-%m-%Y %H:%M:%S')
+
+            # Instrument
+            instrument = metadata.m_create(Instrument)
+            instrument.n_scans = item['metadata']['n_scans']
+            instrument.dwell_time = item['metadata']['dwell_time']
+            instrument.excitation_energy = item['metadata']['excitation_energy']
+
+            if item['metadata']['source_label'] is not None:
+                instrument.source_label = item['metadata']['source_label']
+
+            # Author Generated
+            author_generated = metadata.m_create(AuthorGenerated)
+            author_generated.author_name = item['metadata']['author']
+            author_generated.group_name = item['metadata']['group_name']
+
+            # Data Header
+            for dlabel in item['metadata']['data_labels']:
+                data_header = metadata.m_create(DataHeader)
+                data_header.channel_id = dlabel['channel_id']
+                data_header.label = dlabel['label']
+                data_header.unit = dlabel['unit']
+
+            data = measurement.m_create(Data)
+            ureg = nomad.units.ureg
+            for i in range(len(item['data'])):
+                spectrum = data.m_create(Spectrum)
+                if item['metadata']['data_labels'][i]['channel_id'] == 0:
+                    spectrum.kinetic_energy = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
+                elif item['metadata']['data_labels'][i]['channel_id'] == 1:
+                    spectrum.count = np.array(item['data'][i])
+                elif item['metadata']['data_labels'][i]['channel_id'] == 2:
+                    spectrum.excitation_energy = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
+                elif item['metadata']['data_labels'][i]['channel_id'] == 3:
+                    spectrum.ring_current = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
+                elif item['metadata']['data_labels'][i]['channel_id'] == 4:
+                    spectrum.total_electron_yield = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
+                elif item['metadata']['data_labels'][i]['channel_id'] == 5:
+                    spectrum.mirror_current = np.array(item['data'][i]) * ureg(item['metadata']['data_labels'][i]['unit'])
