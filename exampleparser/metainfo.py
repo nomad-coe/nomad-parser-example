@@ -68,7 +68,7 @@ class AuthorGenerated(MSection):
 
 
 class DataHeader(MSection):
-    channel_id = Quantity(type=str)
+    channel_id = Quantity(type=int)
     label = Quantity(type=str)
     unit = Quantity(type=str)
 
@@ -92,8 +92,11 @@ class Origin(MSection):
 class Spectrum(MSection):
     n_values = Quantity(type=int)
     kinetic_energy = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='J', description='The kinetic energy range of the spectrum')
-    binding_energy = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='J', description='The binding energy range of the spectrum')
+    excitation_energy = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='J', description='The excitation energy range of the spectrum')
     count = Quantity(type=np.dtype(np.float64), shape=['n_values'], description='The count at each energy value, dimensionless')
+    ring_current = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='A', description='Ring current')
+    total_electron_yield = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='V', description='Total electron yield')
+    mirror_current = Quantity(type=np.dtype(np.float64), shape=['n_values'], unit='V', description='Mirror current')
 
 
 class Metadata(MSection):

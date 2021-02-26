@@ -78,7 +78,7 @@ class ExampleParser(FairdiParser):
             experiment.experiment_id = item['metadata']['experiment_id']
             experiment.experiment_publish_time = datetime.now()
             # experiment.experiment_start_time = datetime.strptime(
-                # item['metadata']['timestamp'], '%d-%m-%Y %H:%M:%S')
+            # item['metadata']['timestamp'], '%d-%m-%Y %H:%M:%S')
 
             # Instrument
             instrument = metadata.m_create(Instrument)
@@ -97,10 +97,23 @@ class ExampleParser(FairdiParser):
             # Data Header
             for dlabel in item['metadata']['data_labels']:
                 data_header = metadata.m_create(DataHeader)
-                data_header.channel_id = str(dlabel['channel_id'])
+                data_header.channel_id = dlabel['channel_id']
                 data_header.label = dlabel['label']
                 data_header.unit = dlabel['unit']
 
             data = measurement.m_create(Data)
 
-            spectrum = data.m_create(Spectrum)
+            for i in range(len(item['data'])):
+                spectrum = data.m_create(Spectrum)
+                if item['metadata']['data_labels'][i]['channel_id'] == 0:
+                    spectrum.kinetic_energy = item['data'][i]
+                elif item['metadata']['data_labels'][i]['channel_id'] == 1:
+                    spectrum.count = item['data'][i]
+                elif item['metadata']['data_labels'][i]['channel_id'] == 2:
+                    spectrum.excitation_energy = item['data'][i]
+                elif item['metadata']['data_labels'][i]['channel_id'] == 3:
+                    spectrum.ring_current = item['data'][i]
+                elif item['metadata']['data_labels'][i]['channel_id'] == 4:
+                    spectrum.total_electron_yield = item['data'][i]
+                elif item['metadata']['data_labels'][i]['channel_id'] == 5:
+                    spectrum.mirror_current = item['data'][i]
