@@ -16,9 +16,14 @@
 # limitations under the License.
 #
 
-from nomad.metainfo import Section, Quantity
+from nomad.metainfo import Section, Quantity, Package
 
 from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
+
+
+m_package = Package(
+    name='example_nomadmetainfo_json',
+    description='None')
 
 
 # We extend the existing common definition of a section "single configuration calculation"
@@ -30,3 +35,6 @@ class ExampleSCC(SCC):
     # We define an additional example quantity. Use the prefix x_<parsername>_ to denote
     # non common quantities.
     x_example_magic_value = Quantity(type=int, description='The magic value from a magic source.')
+
+
+m_package.__init_metainfo__()
