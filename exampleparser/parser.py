@@ -69,7 +69,7 @@ class ExampleParser(FairdiParser):
             supported_compressions=['gz', 'bz2', 'xz']
         )
 
-    def run(self, mainfile: str, archive: EntryArchive, logger):
+    def parse(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
         logger.info('Hello World')
 
