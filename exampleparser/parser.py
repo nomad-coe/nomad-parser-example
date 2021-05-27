@@ -20,7 +20,7 @@ import datetime
 import numpy as np
 
 from nomad.datamodel import EntryArchive
-from nomad.parsing import FairdiParser
+from nomad.parsing import MatchingParser
 from nomad.units import ureg as units
 from nomad.datamodel.metainfo.public import section_run as Run
 from nomad.datamodel.metainfo.public import section_system as System
@@ -60,7 +60,7 @@ mainfile_parser = UnstructuredTextFileParser(quantities=[
 ])
 
 
-class ExampleParser(FairdiParser):
+class ExampleParser(MatchingParser):
     def __init__(self):
         super().__init__(
             name='parsers/example', code_name='EXAMPLE', code_homepage='https://www.example.eu/',
