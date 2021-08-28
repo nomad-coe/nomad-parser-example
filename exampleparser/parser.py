@@ -21,10 +21,11 @@ import numpy as np
 
 from nomad.datamodel import EntryArchive
 from nomad.parsing import MatchingParser
+from nomad.utils import get_logger
 from nomad.units import ureg as units
-from nomad.datamodel.metainfo.public import section_run as Run
-from nomad.datamodel.metainfo.public import section_system as System
-from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
+from nomad.datamodel.metainfo.run.run import Run
+from nomad.datamodel.metainfo.run.system import System, Atoms, SystemReference
+from nomad.datamodel.metainfo.run.calculation import Calculation, Energy, EnergyEntry
 
 from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
 
@@ -44,7 +45,7 @@ def str_to_sites(string):
 calculation_parser = UnstructuredTextFileParser(quantities=[
     Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites, repeats=True),
     Quantity(
-        System.lattice_vectors,
+        Atoms.lattice_vectors,
         r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
         repeats=False),
     Quantity('energy', r'energy: (\d\.\d+)'),
@@ -69,8 +70,10 @@ class ExampleParser(MatchingParser):
             supported_compressions=['gz', 'bz2', 'xz']
         )
 
-    def parse(self, mainfile: str, archive: EntryArchive, logger):
+    def parse(self, mainfile: str, archive: EntryArchive, logger=None):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
+        if not logger:
+            logger = get_logger(__name__)
         logger.info('Hello World')
 
         # Use the previously defined parsers on the given mainfile
@@ -88,16 +91,16 @@ class ExampleParser(MatchingParser):
 
         for calculation in mainfile_parser.get('calculation'):
             system = run.m_create(System)
+            atoms = system.m_create(Atoms)
 
-            system.lattice_vectors = calculation.get('lattice_vectors')
+            atoms.lattice_vectors = calculation.get('lattice_vectors')
             sites = calculation.get('sites')
-            system.atom_labels = [site[0] for site in sites]
-            system.atom_positions = [site[1] for site in sites]
+            atoms.labels = [site[0] for site in sites]
+            atoms.positions = [site[1] for site in sites]
 
-            scc = run.m_create(SCC)
-            scc.single_configuration_calculation_to_system_ref = system
-            scc.energy_total = calculation.get('energy') * units.eV
-            scc.single_configuration_calculation_to_system_ref = system
+            scc = run.m_create(Calculation)
+            scc.m_create(SystemReference, value=system)
+            scc.m_create(Energy, total=EnergyEntry(value=calculation.get('energy') * units.eV))
             magic_source = calculation.get('magic_source')
             if magic_source is not None:
                 scc.x_example_magic_value = magic_source
