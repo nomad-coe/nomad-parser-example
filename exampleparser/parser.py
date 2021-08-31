@@ -23,9 +23,9 @@ from nomad.datamodel import EntryArchive
 from nomad.parsing import MatchingParser
 from nomad.utils import get_logger
 from nomad.units import ureg as units
-from nomad.datamodel.metainfo.run.run import Run
-from nomad.datamodel.metainfo.run.system import System, Atoms, SystemReference
-from nomad.datamodel.metainfo.run.calculation import Calculation, Energy, EnergyEntry
+from nomad.datamodel.metainfo.simulation.run import Run
+from nomad.datamodel.metainfo.simulation.system import System, Atoms
+from nomad.datamodel.metainfo.simulation.calculation import Calculation, Energy, EnergyEntry
 
 from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
 
@@ -99,7 +99,7 @@ class ExampleParser(MatchingParser):
             atoms.positions = [site[1] for site in sites]
 
             scc = run.m_create(Calculation)
-            scc.m_create(SystemReference, value=system)
+            scc.system_ref = system
             scc.m_create(Energy, total=EnergyEntry(value=calculation.get('energy') * units.eV))
             magic_source = calculation.get('magic_source')
             if magic_source is not None:

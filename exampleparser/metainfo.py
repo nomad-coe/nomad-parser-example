@@ -18,7 +18,7 @@
 
 from nomad.metainfo import Section, Quantity, Package
 
-from nomad.datamodel.metainfo.run.calculation import Calculation
+from nomad.datamodel.metainfo.simulation.calculation import Calculation
 
 
 m_package = Package(
