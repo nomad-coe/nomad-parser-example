@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [{ name = "The NOMAD Authors" }]
 license = { text = "Apache-2.0" }
 dependencies = [
-    "nomad-lab>=1.2.0"
+    #"nomad-lab>=1.2.0"
 ]
 
 [project.urls]
