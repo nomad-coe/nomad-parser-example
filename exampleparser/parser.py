@@ -58,6 +58,7 @@ mainfile_parser = TextParser(quantities=[
         repeats=True)
 ])
 
+
 class ExampleParser:
     def parse(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
@@ -84,7 +85,7 @@ class ExampleParser:
 
             calc = Calculation(energy=Energy())
             calc.system_ref = system
-            calc.energy.total = EnergyEntry(value = calculation.get('energy') * units.eV)
+            calc.energy.total = EnergyEntry(value=calculation.get('energy') * units.eV)
             magic_source = calculation.get('magic_source')
             if magic_source is not None:
                 calc.x_example_magic_value = magic_source
