@@ -17,23 +17,18 @@
 #
 
 from nomad.datamodel import EntryArchive
-from nomad.parsing import FairdiParser
-from nomad.datamodel.metainfo.public import section_run as Run
-
-from . import metainfo  # pylint: disable=unused-import
+from nomad.datamodel.metainfo.simulation.run import Run, Program
 
 '''
 This is a hello world style example for an example parser/converter.
 '''
 
 
-class ExampleParser(FairdiParser):
-    def __init__(self):
-        super().__init__(name='parsers/example', code_name='EXAMPLE')
-
-    def run(self, mainfile: str, archive: EntryArchive, logger):
+class ExampleParser:
+    def parse(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
         logger.info('Hello World')
 
         run = archive.m_create(Run)
-        run.program_name = 'EXAMPLE'
+        run.program = Program(name='EXAMPLE')
+
