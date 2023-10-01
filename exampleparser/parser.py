@@ -31,4 +31,3 @@ class ExampleParser:
 
         run = archive.m_create(Run)
         run.program = Program(name='EXAMPLE')
-
