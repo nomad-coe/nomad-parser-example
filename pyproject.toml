@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'exampleparser'
+version = '1.0'
+description = 'An example parser for NOMAD.'
+readme = "README.md"
+authors = [{ name = "The NOMAD Authors" }]
+license = { text = "Apache-2.0" }
+dependencies = [
+    "nomad-lab>=1.2.0"
+]
+
+[project.urls]
+homepage = "https://github.com/nomad-coe/nomad-parser-example"
+
+[project.optional-dependencies]
+tests = [
+    'pytest'
+]
+
+[tool.setuptools.packages.find]
+include = ["exampleparser*"]
+
+[tool.setuptools.package-data]
+nomadschemaexample = ['*/metadata.yaml', '*/README.md']
