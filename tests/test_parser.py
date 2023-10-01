@@ -31,7 +31,7 @@ def parser():
 
 def test_example(parser):
     archive = EntryArchive()
-    parser.run('tests/data/example.out', archive, logging)
+    parser.parse('tests/data/example.out', archive, logging)
 
-    run = archive.section_run[0]
-    assert run.program_name == 'EXAMPLE'
+    run = archive.run[0]
+    assert run.program.name == 'EXAMPLE'
