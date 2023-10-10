@@ -20,13 +20,12 @@ import datetime
 import numpy as np
 
 from nomad.datamodel import EntryArchive
-from nomad.parsing import MatchingParser
 from nomad.units import ureg as units
-from nomad.datamodel.metainfo.public import section_run as Run
-from nomad.datamodel.metainfo.public import section_system as System
-from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
+from nomad.datamodel.metainfo.simulation.run import Run, Program
+from nomad.datamodel.metainfo.simulation.system import System, Atoms
+from nomad.datamodel.metainfo.simulation.calculation import Calculation, Energy, EnergyEntry
 
-from nomad.parsing.file_parser import UnstructuredTextFileParser, Quantity
+from nomad.parsing.file_parser import TextParser, Quantity
 
 from . import metainfo  # pylint: disable=unused-import
 
@@ -41,16 +40,16 @@ def str_to_sites(string):
     return sym, pos
 
 
-calculation_parser = UnstructuredTextFileParser(quantities=[
+calculation_parser = TextParser(quantities=[
     Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites, repeats=True),
     Quantity(
-        System.lattice_vectors,
+        Atoms.lattice_vectors,
         r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
         repeats=False),
     Quantity('energy', r'energy: (\d\.\d+)'),
     Quantity('magic_source', r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)', repeats=False)])
 
-mainfile_parser = UnstructuredTextFileParser(quantities=[
+mainfile_parser = TextParser(quantities=[
     Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
     Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
     Quantity(
@@ -60,15 +59,7 @@ mainfile_parser = UnstructuredTextFileParser(quantities=[
 ])
 
 
-class ExampleParser(MatchingParser):
-    def __init__(self):
-        super().__init__(
-            name='parsers/example', code_name='EXAMPLE', code_homepage='https://www.example.eu/',
-            mainfile_mime_re=r'(application/.*)|(text/.*)',
-            mainfile_contents_re=(r'^\s*#\s*This is example output'),
-            supported_compressions=['gz', 'bz2', 'xz']
-        )
-
+class ExampleParser:
     def parse(self, mainfile: str, archive: EntryArchive, logger):
         # Log a hello world, just to get us started. TODO remove from an actual parser.
         logger.info('Hello World')
@@ -77,27 +68,26 @@ class ExampleParser(MatchingParser):
         mainfile_parser.mainfile = mainfile
         mainfile_parser.parse()
 
-        # Output all parsed data into the given archive.
-        run = archive.m_create(Run)
-        run.program_name = 'super_code'
-        run.program_version = str(mainfile_parser.get('program_version'))
-        date = datetime.datetime.strptime(
-            mainfile_parser.get('date'),
-            '%Y/%m/%d') - datetime.datetime(1970, 1, 1)
-        run.program_compilation_datetime = date.total_seconds()
+        run = Run()
+        date = datetime.datetime.strptime(mainfile_parser.date, '%Y/%m/%d')
+        run.program = Program(
+            name='super_code', version=mainfile_parser.get('program_version'),
+            compilation_datetime=date.timestamp())
 
-        for calculation in mainfile_parser.get('calculation'):
-            system = run.m_create(System)
+        for calculation in mainfile_parser.get('calculation', []):
+            system = System(atoms=Atoms())
 
-            system.lattice_vectors = calculation.get('lattice_vectors')
+            system.atoms.lattice_vectors = calculation.get('lattice_vectors')
             sites = calculation.get('sites')
-            system.atom_labels = [site[0] for site in sites]
-            system.atom_positions = [site[1] for site in sites]
+            system.atoms.labels = [site[0] for site in sites]
+            system.atoms.positions = [site[1] for site in sites]
+            run.system.append(system)
 
-            scc = run.m_create(SCC)
-            scc.single_configuration_calculation_to_system_ref = system
-            scc.energy_total = calculation.get('energy') * units.eV
-            scc.single_configuration_calculation_to_system_ref = system
+            calc = Calculation(energy=Energy())
+            calc.system_ref = system
+            calc.energy.total = EnergyEntry(value=calculation.get('energy') * units.eV)
             magic_source = calculation.get('magic_source')
             if magic_source is not None:
-                scc.x_example_magic_value = magic_source
+                calc.x_example_magic_value = magic_source
+            run.calculation.append(calc)
+        archive.run.append(run)

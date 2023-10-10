@@ -33,7 +33,7 @@ def test_example(parser):
     archive = EntryArchive()
     parser.parse('tests/data/example.out', archive, logging)
 
-    run = archive.section_run[0]
-    assert len(run.section_system) == 2
-    assert len(run.section_single_configuration_calculation) == 2
-    assert run.section_single_configuration_calculation[0].x_example_magic_value == 42
+    run = archive.run[0]
+    assert len(run.system) == 2
+    assert len(run.calculation) == 2
+    assert run.calculation[0].x_example_magic_value == 42

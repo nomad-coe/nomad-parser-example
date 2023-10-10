@@ -18,7 +18,7 @@
 
 from nomad.metainfo import Section, Quantity, Package
 
-from nomad.datamodel.metainfo.public import section_single_configuration_calculation as SCC
+from nomad.datamodel.metainfo.simulation.calculation import Calculation
 
 
 m_package = Package(
@@ -27,7 +27,7 @@ m_package = Package(
 
 
 # We extend the existing common definition of a section "single configuration calculation"
-class ExampleSCC(SCC):
+class ExampleCalculation(Calculation):
     # We alter the default base class behavior to add all definitions to the existing
     # base class instead of inheriting from the base class
     m_def = Section(extends_base_section=True)
