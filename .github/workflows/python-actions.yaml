@@ -1,10 +1,7 @@
-name: python
-
+name: install-and-test-workflow
 on: [push]
-
 jobs:
-  build:
-
+  install-and-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -12,27 +9,19 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Check out nomad
-      uses: actions/checkout@v3
-      with:
-        repository: nomad-coe/nomad
-        path: nomad
-        submodules: true
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install .[tests]
-        pip install ./nomad[parsing,infrastructure]
-        pip install types-PyYAML
-    - name: pycodestyle
-      run: |
-        python -m pycodestyle --ignore=E501,E701,E731 *parser tests
-    - name: pylint
-      run: |
-        python -m pylint --load-plugins=nomad.metainfo.pylint_plugin *parser tests
+        pip install .[dev,tests]
     - name: mypy
       run: |
-        python -m mypy --ignore-missing-imports --follow-imports=silent --no-strict-optional *parser tests
+        python -m mypy --ignore-missing-imports --follow-imports=silent --no-strict-optional simulationworkflowschema tests
     - name: Test with pytest
       run: |
         python -m pytest -sv tests
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: chartboost/ruff-action@v1
+

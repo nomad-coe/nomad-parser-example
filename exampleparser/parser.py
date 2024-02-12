@@ -17,7 +17,7 @@
 #
 
 from nomad.datamodel import EntryArchive
-from nomad.datamodel.metainfo.simulation.run import Run, Program
+from nomad.datamodel.metainfo.workflow import Workflow
 
 '''
 This is a hello world style example for an example parser/converter.
@@ -29,5 +29,4 @@ class ExampleParser:
         # Log a hello world, just to get us started. TODO remove from an actual parser.
         logger.info('Hello World')
 
-        run = archive.m_create(Run)
-        run.program = Program(name='EXAMPLE')
+        archive.workflow2 = Workflow(name='EXAMPLE')

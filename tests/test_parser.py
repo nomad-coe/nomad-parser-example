@@ -33,5 +33,4 @@ def test_example(parser):
     archive = EntryArchive()
     parser.parse('tests/data/example.out', archive, logging)
 
-    run = archive.run[0]
-    assert run.program.name == 'EXAMPLE'
+    assert archive.workflow2.name == 'EXAMPLE'
