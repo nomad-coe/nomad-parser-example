@@ -15,7 +15,7 @@ jobs:
         pip install .[dev,tests]
     - name: mypy
       run: |
-        python -m mypy --ignore-missing-imports --follow-imports=silent --no-strict-optional simulationworkflowschema tests
+        python -m mypy --ignore-missing-imports --follow-imports=silent --no-strict-optional exampleparser tests
     - name: Test with pytest
       run: |
         python -m pytest -sv tests
