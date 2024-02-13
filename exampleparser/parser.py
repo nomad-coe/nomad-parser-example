@@ -20,15 +20,11 @@ import datetime
 
 import numpy as np
 from nomad.datamodel import EntryArchive
-from nomad.datamodel.metainfo.simulation.calculation import (
-    Calculation,
-    Energy,
-    EnergyEntry,
-)
-from nomad.datamodel.metainfo.simulation.run import Program, Run
-from nomad.datamodel.metainfo.simulation.system import Atoms, System
+from nomad.datamodel.metainfo.workflow import Workflow
 from nomad.parsing.file_parser import Quantity, TextParser
 from nomad.units import ureg as units
+
+from .metainfo.example import Model, Output, Simulation
 
 """
 This is a hello world style example for an example parser/converter.
@@ -50,7 +46,7 @@ calculation_parser = TextParser(
             repeats=True,
         ),
         Quantity(
-            Atoms.lattice_vectors,
+            Model.lattice,
             r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',  # noqa
             repeats=False,
         ),
@@ -86,28 +82,27 @@ class ExampleParser:
         mainfile_parser.mainfile = mainfile
         mainfile_parser.parse()
 
-        run = Run()
-        date = datetime.datetime.strptime(mainfile_parser.date, '%Y/%m/%d')
-        run.program = Program(
-            name='super_code',
-            version=mainfile_parser.get('program_version'),
-            compilation_datetime=date.timestamp(),
+        simulation = Simulation(
+            code_name='super_code', code_version=mainfile_parser.get('program_version')
         )
+        date = datetime.datetime.strptime(mainfile_parser.date, '%Y/%m/%d')
+        simulation.date = date
 
         for calculation in mainfile_parser.get('calculation', []):
-            system = System(atoms=Atoms())
+            model = Model()
 
-            system.atoms.lattice_vectors = calculation.get('lattice_vectors')
+            model.lattice = calculation.get('lattice_vectors')
             sites = calculation.get('sites')
-            system.atoms.labels = [site[0] for site in sites]
-            system.atoms.positions = [site[1] for site in sites]
-            run.system.append(system)
+            model.labels = [site[0] for site in sites]
+            model.positions = [site[1] for site in sites]
+            simulation.model.append(model)
 
-            calc = Calculation(energy=Energy())
-            calc.system_ref = system
-            calc.energy.total = EnergyEntry(value=calculation.get('energy') * units.eV)
+            output = Output()
+            output.model = model
+            output.energy = calculation.get('energy') * units.eV
             magic_source = calculation.get('magic_source')
             if magic_source is not None:
-                calc.x_example_magic_value = magic_source
-            run.calculation.append(calc)
-        archive.run.append(run)
+                archive.workflow2 = Workflow(x_example_magic_value=magic_source)
+            simulation.output.append(output)
+        # put the simulation section into archive data
+        archive.data = simulation
