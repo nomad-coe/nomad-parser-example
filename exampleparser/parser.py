@@ -17,21 +17,22 @@
 #
 
 import datetime
+
 import numpy as np
-
 from nomad.datamodel import EntryArchive
+from nomad.datamodel.metainfo.simulation.calculation import (
+    Calculation,
+    Energy,
+    EnergyEntry,
+)
+from nomad.datamodel.metainfo.simulation.run import Program, Run
+from nomad.datamodel.metainfo.simulation.system import Atoms, System
+from nomad.parsing.file_parser import Quantity, TextParser
 from nomad.units import ureg as units
-from nomad.datamodel.metainfo.simulation.run import Run, Program
-from nomad.datamodel.metainfo.simulation.system import System, Atoms
-from nomad.datamodel.metainfo.simulation.calculation import Calculation, Energy, EnergyEntry
 
-from nomad.parsing.file_parser import TextParser, Quantity
-
-from . import metainfo  # pylint: disable=unused-import
-
-'''
+"""
 This is a hello world style example for an example parser/converter.
-'''
+"""
 
 
 def str_to_sites(string):
@@ -40,23 +41,40 @@ def str_to_sites(string):
     return sym, pos
 
 
-calculation_parser = TextParser(quantities=[
-    Quantity('sites', r'([A-Z]\([\d\.\, \-]+\))', str_operation=str_to_sites, repeats=True),
-    Quantity(
-        Atoms.lattice_vectors,
-        r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',
-        repeats=False),
-    Quantity('energy', r'energy: (\d\.\d+)'),
-    Quantity('magic_source', r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)', repeats=False)])
+calculation_parser = TextParser(
+    quantities=[
+        Quantity(
+            'sites',
+            r'([A-Z]\([\d\.\, \-]+\))',
+            str_operation=str_to_sites,
+            repeats=True,
+        ),
+        Quantity(
+            Atoms.lattice_vectors,
+            r'(?:latice|cell): \((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*\((\d)\, (\d), (\d)\)\,?\s*',  # noqa
+            repeats=False,
+        ),
+        Quantity('energy', r'energy: (\d\.\d+)'),
+        Quantity(
+            'magic_source',
+            r'done with magic source\s*\*{3}\s*\*{3}\s*[^\d]*(\d+)',
+            repeats=False,
+        ),
+    ]
+)
 
-mainfile_parser = TextParser(quantities=[
-    Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
-    Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
-    Quantity(
-        'calculation', r'\s*system \d+([\s\S]+?energy: [\d\.]+)([\s\S]+\*\*\*)*',
-        sub_parser=calculation_parser,
-        repeats=True)
-])
+mainfile_parser = TextParser(
+    quantities=[
+        Quantity('date', r'(\d\d\d\d\/\d\d\/\d\d)', repeats=False),
+        Quantity('program_version', r'super\_code\s*v(\d+)\s*', repeats=False),
+        Quantity(
+            'calculation',
+            r'\s*system \d+([\s\S]+?energy: [\d\.]+)([\s\S]+\*\*\*)*',
+            sub_parser=calculation_parser,
+            repeats=True,
+        ),
+    ]
+)
 
 
 class ExampleParser:
@@ -71,8 +89,10 @@ class ExampleParser:
         run = Run()
         date = datetime.datetime.strptime(mainfile_parser.date, '%Y/%m/%d')
         run.program = Program(
-            name='super_code', version=mainfile_parser.get('program_version'),
-            compilation_datetime=date.timestamp())
+            name='super_code',
+            version=mainfile_parser.get('program_version'),
+            compilation_datetime=date.timestamp(),
+        )
 
         for calculation in mainfile_parser.get('calculation', []):
             system = System(atoms=Atoms())

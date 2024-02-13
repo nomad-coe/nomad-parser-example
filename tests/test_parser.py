@@ -16,9 +16,9 @@
 # limitations under the License.
 #
 
-import pytest
 import logging
 
+import pytest
 from nomad.datamodel import EntryArchive
 
 from exampleparser import ExampleParser

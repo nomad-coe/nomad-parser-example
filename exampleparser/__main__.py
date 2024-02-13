@@ -16,16 +16,16 @@
 # limitations under the License.
 #
 
-import sys
 import json
 import logging
+import sys
 
-from nomad.utils import configure_logging
 from nomad.datamodel import EntryArchive
+from nomad.utils import configure_logging
+
 from exampleparser import ExampleParser
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     configure_logging(console_log_level=logging.DEBUG)
     archive = EntryArchive()
     ExampleParser().parse(sys.argv[1], archive, logging)

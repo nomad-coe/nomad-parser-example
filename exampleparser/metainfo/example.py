@@ -16,17 +16,14 @@
 # limitations under the License.
 #
 
-from nomad.metainfo import Section, Quantity, Package
-
 from nomad.datamodel.metainfo.simulation.calculation import Calculation
+from nomad.metainfo import Package, Quantity, Section
+
+m_package = Package(name='example_nomadmetainfo_json', description='None')
 
 
-m_package = Package(
-    name='example_nomadmetainfo_json',
-    description='None')
-
-
-# We extend the existing common definition of a section "single configuration calculation"
+# We extend the existing common definition of
+# a section "single configuration calculation"
 class ExampleCalculation(Calculation):
     # We alter the default base class behavior to add all definitions to the existing
     # base class instead of inheriting from the base class
@@ -34,7 +31,9 @@ class ExampleCalculation(Calculation):
 
     # We define an additional example quantity. Use the prefix x_<parsername>_ to denote
     # non common quantities.
-    x_example_magic_value = Quantity(type=int, description='The magic value from a magic source.')
+    x_example_magic_value = Quantity(
+        type=int, description='The magic value from a magic source.'
+    )
 
 
 m_package.__init_metainfo__()
