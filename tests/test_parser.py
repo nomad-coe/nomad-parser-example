@@ -17,6 +17,7 @@
 #
 
 import logging
+import os
 
 import pytest
 from nomad.datamodel import EntryArchive
@@ -31,7 +32,8 @@ def parser():
 
 def test_example(parser):
     archive = EntryArchive()
-    parser.parse('tests/data/example.out', archive, logging)
+    data_path = os.path.join("tests", "data", "example.out")
+    parser.parse(data_path, archive, logging)
 
     run = archive.run[0]
     assert len(run.system) == 2
