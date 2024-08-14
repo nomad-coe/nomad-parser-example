@@ -35,7 +35,7 @@ def test_example(parser):
     data_path = os.path.join("tests", "data", "example.out")
     parser.parse(data_path, archive, logging)
 
-    run = archive.run[0]
-    assert len(run.system) == 2
-    assert len(run.calculation) == 2
-    assert run.calculation[0].x_example_magic_value == 42
+    sim = archive.data
+    assert len(sim.model) == 2
+    assert len(sim.output) == 2
+    assert archive.workflow2.x_example_magic_value == 42
