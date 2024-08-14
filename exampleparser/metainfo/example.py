@@ -36,7 +36,7 @@ class Model(ArchiveSection):
     )
 
     positions = Quantity(
-        type=np.float64, shape=['n_atoms'], description="""Positions of the atoms."""
+        type=np.float64, shape=['n_atoms', 3], description="""Positions of the atoms."""
     )
 
     lattice = Quantity(
