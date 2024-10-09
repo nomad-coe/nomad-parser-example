@@ -16,10 +16,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from nomad.metainfo import Environment
-from nomad.metainfo.legacy import LegacyMetainfoEnvironment
 
 from .example import m_package
-
-m_env = LegacyMetainfoEnvironment()
-m_env.m_add_sub_section(Environment.packages, m_package)  # type: ignore
